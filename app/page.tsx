@@ -1,8 +1,20 @@
+import { Contributions } from "@/components/Contributions";
+import { CurrentlyBuilding } from "@/components/CurrentlyBuilding";
+import { PinnedProjects } from "@/components/PinnedProjects";
+import { Sidebar } from "@/components/Sidebar";
+import { TechStack } from "@/components/TechStack";
+import { site } from "@/content/site";
+
 export default function Home() {
   return (
-    <main className="mx-auto max-w-[1000px] px-6 py-16">
-      <h1 className="text-2xl font-medium">iriskernel</h1>
-      <p className="mt-2 text-mu">Portfolio coming soon.</p>
-    </main>
+    <div className="grid gap-8 md:grid-cols-[260px_minmax(0,1fr)]">
+      <Sidebar />
+      <div className="flex min-w-0 flex-col gap-8">
+        <CurrentlyBuilding caseStudyReady={false} />
+        <PinnedProjects repos={site.pinned} />
+        <Contributions calendar={null} />
+        <TechStack />
+      </div>
+    </div>
   );
 }
