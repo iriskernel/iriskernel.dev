@@ -1,3 +1,5 @@
+import { About } from "@/components/About";
+import { Contact } from "@/components/Contact";
 import { Contributions } from "@/components/Contributions";
 import { CurrentlyBuilding } from "@/components/CurrentlyBuilding";
 import { NowPlaying } from "@/components/NowPlaying";
@@ -13,15 +15,19 @@ export const revalidate = 3600;
 export default async function Home() {
   const { pinned, calendar } = await getGitHubData();
   return (
-    <div className="grid gap-8 md:grid-cols-[260px_minmax(0,1fr)]">
-      <Sidebar />
-      <div className="flex min-w-0 flex-col gap-8">
-        <CurrentlyBuilding caseStudyReady={false} />
-        <PinnedProjects repos={pinned} />
-        <Contributions calendar={calendar} />
-        {nowPlayingEnabled() && <NowPlaying />}
-        <TechStack />
+    <div className="flex flex-col gap-8">
+      <div className="grid gap-8 md:grid-cols-[260px_minmax(0,1fr)]">
+        <Sidebar />
+        <div className="flex min-w-0 flex-col gap-8">
+          <CurrentlyBuilding caseStudyReady={false} />
+          <PinnedProjects repos={pinned} />
+          <Contributions calendar={calendar} />
+          {nowPlayingEnabled() && <NowPlaying />}
+          <TechStack />
+        </div>
       </div>
+      <About />
+      <Contact />
     </div>
   );
 }
