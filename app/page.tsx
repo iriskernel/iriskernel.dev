@@ -1,18 +1,25 @@
 import { Contributions } from "@/components/Contributions";
 import { CurrentlyBuilding } from "@/components/CurrentlyBuilding";
+import { NowPlaying } from "@/components/NowPlaying";
 import { PinnedProjects } from "@/components/PinnedProjects";
 import { Sidebar } from "@/components/Sidebar";
 import { TechStack } from "@/components/TechStack";
-import { site } from "@/content/site";
+import { getGitHubData } from "@/lib/github";
+import { nowPlayingEnabled } from "@/lib/spotify";
 
-export default function Home() {
+// The page is static and rebuilt in the background at most once an hour
+export const revalidate = 3600;
+
+export default async function Home() {
+  const { pinned, calendar } = await getGitHubData();
   return (
     <div className="grid gap-8 md:grid-cols-[260px_minmax(0,1fr)]">
       <Sidebar />
       <div className="flex min-w-0 flex-col gap-8">
         <CurrentlyBuilding caseStudyReady={false} />
-        <PinnedProjects repos={site.pinned} />
-        <Contributions calendar={null} />
+        <PinnedProjects repos={pinned} />
+        <Contributions calendar={calendar} />
+        {nowPlayingEnabled() && <NowPlaying />}
         <TechStack />
       </div>
     </div>
