@@ -2,7 +2,7 @@ import Link from "next/link";
 import { DraftLabel } from "@/components/DraftLabel";
 import { getEntries } from "@/lib/content";
 
-export const metadata = { title: "Log" };
+export const metadata = { title: "Log", alternates: { canonical: "/log" } };
 
 export default async function LogPage() {
   const entries = await getEntries("log");

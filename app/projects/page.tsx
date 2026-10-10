@@ -4,7 +4,7 @@ import { PinnedProjects } from "@/components/PinnedProjects";
 import { getGitHubData } from "@/lib/github";
 import { getEntries } from "@/lib/content";
 
-export const metadata = { title: "Projects" };
+export const metadata = { title: "Projects", alternates: { canonical: "/projects" } };
 export const revalidate = 3600;
 
 export default async function ProjectsPage() {

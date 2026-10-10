@@ -11,8 +11,9 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps<"/log/[slug]">): Promise<Metadata> {
-  const entry = await getEntry("log", (await params).slug);
-  return entry ? { title: entry.meta.title, description: entry.meta.summary } : {};
+  const { slug } = await params;
+  const entry = await getEntry("log", slug);
+  return entry ? { title: entry.meta.title, description: entry.meta.summary, alternates: { canonical: `/log/${slug}` } } : {};
 }
 
 export default async function LogEntry({ params }: PageProps<"/log/[slug]">) {

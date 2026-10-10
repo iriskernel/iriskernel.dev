@@ -11,6 +11,9 @@ import { getPublished } from "@/lib/content";
 import { getGitHubData } from "@/lib/github";
 import { nowPlayingEnabled } from "@/lib/spotify";
 
+// Tells search engines the real address of each page is on iriskernel.dev
+export const metadata = { alternates: { canonical: "/" } };
+
 // The page is static and rebuilt in the background at most once an hour
 export const revalidate = 3600;
 

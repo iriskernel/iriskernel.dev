@@ -1,6 +1,6 @@
 import { Terminal } from "./Terminal";
 
-export const metadata = { title: "Terminal", description: "A small terminal easter egg." };
+export const metadata = { title: "Terminal", description: "A small terminal easter egg.", alternates: { canonical: "/terminal" } };
 
 export default function TerminalPage() {
   return (
