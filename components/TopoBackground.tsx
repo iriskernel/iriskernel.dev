@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { rainbowState, subscribeRainbow } from "@/lib/rainbow";
 
 // The contour-line background of the landing and sign-in pages. A fixed, full-screen layer behind the page:
 // the page scrolls over it, it never moves with the content, takes no clicks and is hidden from screen readers.
@@ -117,6 +118,7 @@ function ImageContours({ drift, perf }: { drift: boolean; perf: boolean }) {
           ref={(el) => {
             refs.current[i] = el;
           }}
+          style={{ filter: "hue-rotate(var(--rainbow-deg, 0deg))" }}
           className={`topo-pic ${cls} absolute -inset-[48px] ${drift ? "topo-drift" : ""}`}
         />
       ))}
@@ -296,6 +298,11 @@ function ShaderContours({ perf, onFail }: { perf: boolean; onFail: () => void })
       g.uniform2f(uPeakA, aX, aY);
       g.uniform2f(uPeakB, bX, bY);
       g.uniform1f(uTime, fieldTime);
+      if (rainbowState.active) {
+        g.uniform4fv(uAccent, rainbowState.glAccent);
+        g.uniform4fv(uMajor, rainbowState.glMajor);
+        g.uniform4fv(uMinor, rainbowState.glMinor);
+      }
       g.drawArrays(g.TRIANGLES, 0, 3);
     };
     const size = () => {
@@ -315,6 +322,13 @@ function ShaderContours({ perf, onFail }: { perf: boolean; onFail: () => void })
     scheme.addEventListener("change", onScheme);
     const themeObserver = new MutationObserver(onScheme);
     themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+    const unsubRainbow = subscribeRainbow((active) => {
+      if (!active) {
+        setColors();
+        draw();
+      }
+    });
 
     const loop = (now: number) => {
       raf = requestAnimationFrame(loop);
@@ -379,6 +393,7 @@ function ShaderContours({ perf, onFail }: { perf: boolean; onFail: () => void })
       window.removeEventListener("resize", onResize);
       scheme.removeEventListener("change", onScheme);
       themeObserver.disconnect();
+      unsubRainbow();
       g.deleteBuffer(buf);
       g.deleteProgram(prog);
     };

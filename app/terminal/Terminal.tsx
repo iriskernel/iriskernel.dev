@@ -2,6 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { site } from "@/content/site";
+import {
+  startRainbow,
+  stopRainbow,
+  toggleRainbow,
+  setRainbowSpeed,
+} from "@/lib/rainbow";
 
 type Block = { id: number; command?: string; output: React.ReactNode };
 
@@ -14,6 +20,7 @@ const shortcutCommands = [
   "garage",
   "dmesg",
   "about",
+  "rainbow",
   "rm -rf /",
   "clear",
 ] as const;
@@ -40,6 +47,7 @@ const allCommands = [
   "poweroff",
   "reboot",
   "forkbomb",
+  "rainbow",
 ] as const;
 
 const link = (href: string, text: string) => (
@@ -189,6 +197,8 @@ function run(input: string): React.ReactNode {
           <dd className="text-mu">links and where to find me</dd>
           <dt className="text-ac">ls</dt>
           <dd className="text-mu">list virtual directory files</dd>
+          <dt className="text-ac">rainbow</dt>
+          <dd className="text-mu">cycle whole 360° color spectrum across topo &amp; UI (fast/slow/off)</dd>
           <dt className="text-danger font-medium">rm -rf /</dt>
           <dd className="text-danger/80">⚠️ self-destruct (collapse entire website)</dd>
           <dt className="text-ac">clear</dt>
@@ -363,6 +373,68 @@ function run(input: string): React.ReactNode {
       if (arg.includes("dmesg")) return run("dmesg");
       if (arg.includes("garage") || arg.includes("projects")) return run("garage");
       return <p className="text-danger">cat: {arg}: No such file or directory</p>;
+
+    case "rainbow": {
+      let active = false;
+      let label = "toggled";
+      if (arg === "off" || arg === "stop") {
+        active = stopRainbow();
+        label = "disengaged";
+      } else if (arg === "on" || arg === "start") {
+        active = startRainbow();
+        label = "engaged";
+      } else if (arg === "fast") {
+        setRainbowSpeed("fast");
+        active = startRainbow("fast");
+        label = "turbo speed engaged (4s rotation)";
+      } else if (arg === "slow") {
+        setRainbowSpeed("slow");
+        active = startRainbow("slow");
+        label = "chill speed engaged (22s rotation)";
+      } else if (arg === "normal") {
+        setRainbowSpeed("normal");
+        active = startRainbow("normal");
+        label = "normal speed engaged (10s rotation)";
+      } else {
+        active = toggleRainbow();
+        label = active ? "engaged" : "disengaged";
+      }
+
+      if (!active) {
+        return (
+          <div className="flex flex-col gap-1 font-mono text-xs sm:text-sm">
+            <p className="font-bold text-tx">
+              <span className="text-mu">✔</span> Rainbow chromatic spectrum {label}.
+            </p>
+            <p className="text-mu">
+              WebGL topographic contour lines and UI accent tokens restored to standard theme colors.
+            </p>
+          </div>
+        );
+      }
+
+      return (
+        <div className="flex flex-col gap-1.5 font-mono text-xs sm:text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-base select-none">🌈</span>
+            <span className="font-bold bg-gradient-to-r from-red-500 via-amber-400 via-emerald-400 via-cyan-400 to-violet-500 bg-clip-text text-transparent">
+              CHROMATIC RAINBOW SPECTRUM ENGAGED
+            </span>
+          </div>
+          <p className="text-tx">
+            Sweeping the 360° color spectrum across the living WebGL topographic contours, borders, and UI accents.
+          </p>
+          <div className="mt-1 flex flex-col gap-0.5 text-xs text-mu">
+            <p>• WebGL Shader: <span className="text-ac font-medium">real-time GPU uniform hue sweep</span></p>
+            <p>• UI Tokens: <span className="text-ac2 font-medium">--ac, --ac2, --topo-* dynamically cycling</span></p>
+            <p>• Mode: <span className="text-tx font-medium">{label}</span></p>
+          </div>
+          <p className="mt-1 text-[11px] text-mu">
+            Options: <span className="text-ac font-medium">rainbow fast</span> (turbo) · <span className="text-ac font-medium">rainbow slow</span> (chill) · <span className="text-ac font-medium">rainbow off</span> (reset)
+          </p>
+        </div>
+      );
+    }
 
     case "sudo":
       return (
@@ -577,12 +649,14 @@ export function Terminal() {
               type="button"
               onClick={() => submit(c)}
               className={`rounded-md border px-2.5 py-1 font-mono text-xs transition-colors ${
-                c === "rm -rf /"
+                c === "rainbow"
+                  ? "border-violet-500/40 bg-gradient-to-r from-red-500/10 via-emerald-500/10 to-blue-500/10 hover:border-ac text-tx font-medium hover:text-ac"
+                  : c === "rm -rf /"
                   ? "border-danger/60 bg-danger/10 text-danger hover:border-danger hover:bg-danger/20 font-bold"
                   : "border-ln bg-sf hover:border-ac hover:text-ac2"
               }`}
             >
-              {c}
+              {c === "rainbow" ? "🌈 rainbow" : c}
             </button>
           ))}
         </div>
