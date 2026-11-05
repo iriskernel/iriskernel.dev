@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
+  experimental: {
+    agentUpgrade: "security",
+  },
   // Basic security headers on every page and API route (same as groupy)
   async headers() {
     return [
