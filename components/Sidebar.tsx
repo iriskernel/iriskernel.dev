@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { site } from "@/content/site";
 import { LinkIconView } from "./Icons";
-import { TopographicContour } from "./TopographicContour";
 
 export function Sidebar() {
   return (
@@ -9,12 +8,9 @@ export function Sidebar() {
       {site.avatar.kind === "image" ? (
         <Image src={site.avatar.src} alt="" width={160} height={160} priority className="size-40 rounded-full border border-ln object-cover" />
       ) : (
-        <div aria-hidden="true" className="relative flex size-40 items-center justify-center overflow-hidden rounded-full border-2 border-ac bg-sf/80 backdrop-blur-xs text-5xl font-medium text-ac shadow-sm">
-          <TopographicContour tint="violet" className="opacity-45" />
-          <span className="relative z-10 flex items-center">
-            {site.initials}
-            <span className="cursor-blink text-ac2">_</span>
-          </span>
+        <div aria-hidden="true" className="flex size-40 items-center justify-center rounded-full border-2 border-ac bg-sf text-5xl font-medium text-ac">
+          {site.initials}
+          <span className="cursor-blink text-ac2">_</span>
         </div>
       )}
       <div>

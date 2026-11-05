@@ -11,8 +11,8 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className={`relative scroll-mt-6 rounded-xl border border-ln bg-sf/65 backdrop-blur-xs px-4 pb-4 pt-6 ${className}`}>
-      <h2 id={`${id}-title`} className="absolute -top-2.5 left-3 rounded bg-bg/90 backdrop-blur-xs px-2 text-sm font-medium leading-5 text-ac">
+    <section id={id} aria-labelledby={`${id}-title`} className={`relative scroll-mt-6 rounded-xl border border-ln bg-bg px-4 pb-4 pt-6 ${className}`}>
+      <h2 id={`${id}-title`} className="absolute -top-2.5 left-3 bg-bg px-2 text-sm font-medium leading-5 text-ac">
         <span aria-hidden="true" className="text-mu">
           ─{" "}
         </span>

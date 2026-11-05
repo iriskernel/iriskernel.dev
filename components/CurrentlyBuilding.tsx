@@ -2,15 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { site } from "@/content/site";
 import { Panel } from "./Panel";
-import { TopographicContour } from "./TopographicContour";
 
 export function CurrentlyBuilding({ caseStudyReady }: { caseStudyReady: boolean }) {
   const p = site.currentlyBuilding;
   return (
-    <Panel id="building" title="Currently building" className="overflow-hidden">
-      <TopographicContour tint="violet" className="opacity-45" />
-      <div className="relative z-10 flex flex-wrap items-start gap-4">
-        <Image src="/logo/groupy-tile.svg" alt="" width={56} height={56} className="size-14 rounded-xl shadow-xs" />
+    <Panel id="building" title="Currently building">
+      <div className="flex flex-wrap items-start gap-4">
+        <Image src="/logo/groupy-tile.svg" alt="" width={56} height={56} className="size-14 rounded-xl" />
         <div className="min-w-0 flex-1">
           <p className="flex flex-wrap items-center gap-2">
             <span className="text-lg font-medium">{p.name}</span>
