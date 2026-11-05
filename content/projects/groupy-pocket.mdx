@@ -1,0 +1,40 @@
+export const meta = {
+  title: "Groupy Pocket",
+  summary: "Offline-first mobile audio player with GPU shaders & SQLite caching for Android & iOS.",
+  role: "Mobile engineering, native architecture, audio subsystems & design",
+  links: [
+    { label: "Releases (.apk & .ipa)", href: "https://github.com/iriskernel/groupy-pocket-releases" },
+    { label: "Groupy Web", href: "https://groupy.iriskernel.dev" },
+  ],
+  draft: false,
+};
+
+## What it is
+
+Groupy Pocket is the official mobile companion for the [Groupy](https://groupy.iriskernel.dev) music ecosystem, built with React Native and Expo 57. Engineered from the ground up for high-fidelity offline audio playback, local file importing, background media controls, GPU shaders, and bidirectional cloud synchronization with Groupy Web.
+
+<Screenshot src="/projects/groupy-pocket/banner.png" alt="Groupy Pocket Banner" caption="Groupy Pocket for Android and iOS" />
+
+## Architectural Highlights
+
+### 100% Offline SQLite WAL Storage
+All audio files, playlists, and listening history are cached locally in an embedded SQLite database using Write-Ahead Logging (WAL) mode. The app is completely functional offline with zero third-party telemetry or forced network dependency.
+
+### Custom GPU Shaders on Mobile
+Bringing the signature elevation contour visual identity from Groupy Web into native mobile screens through hardware-accelerated WebGL / GLSL shaders running at 60fps.
+
+<Screenshot src="/projects/groupy-pocket/showcase.png" alt="Groupy Pocket Interface Showcase" caption="Interface showcase with topographic elevation aesthetics and native player controls" />
+
+### Native Audio Session Management
+Full lock-screen media controls, Bluetooth audio metadata streaming, gapless track transitions, and remote audio ducking when navigating other apps or answering calls.
+
+### Bidirectional Cloud Sync
+When connected to the internet, Groupy Pocket syncs offline listening logs and personal playlists back into Groupy Web profiles and the Elevation Recap analytics engine.
+
+## Stack & Technologies
+
+- **Core**: React Native, Expo 57, TypeScript
+- **Database**: expo-sqlite (Write-Ahead Logging)
+- **Audio Engine**: expo-av with background audio session controls
+- **Graphics**: WebGL & GLSL elevation contour shaders
+- **Distribution**: Standalone `.apk` for Android and sideloadable `.ipa` for iOS via AltStore, SideStore, and Sideloadly

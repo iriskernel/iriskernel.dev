@@ -11,7 +11,7 @@ const nav = [
 
 export function TopBar() {
   return (
-    <header className="border-b border-ln">
+    <header className="sticky top-0 z-40 border-b border-ln bg-bg/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-[1000px] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-6 py-3">
         <Link href="/" className="flex items-center gap-2 font-medium">
           <Mark />

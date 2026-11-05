@@ -80,11 +80,15 @@ export const site = {
       language: "TypeScript",
       languageColor: "#3178c6",
       href: "https://groupy.iriskernel.dev",
-      note: "Private repo",
+      note: "Web app",
     },
     {
-      name: "Coming soon",
-      description: "Something new is in the garage.",
+      name: "groupy-pocket",
+      description: "Offline-first mobile audio player with GPU shaders & SQLite caching for Android & iOS.",
+      language: "TypeScript",
+      languageColor: "#3178c6",
+      href: "https://github.com/iriskernel/groupy-pocket-releases",
+      note: "React Native / Expo",
     },
   ] as PinnedProject[],
 
@@ -92,9 +96,11 @@ export const site = {
   techStack: [
     { name: "Next.js", icon: "nextdotjs" },
     { name: "TypeScript", icon: "typescript" },
+    { name: "React Native", icon: "react" },
+    { name: "Expo", icon: "expo" },
     { name: "Tailwind", icon: "tailwindcss" },
     { name: "Prisma", icon: "prisma" },
     { name: "Supabase", icon: "supabase" },
-    { name: "Vercel", icon: "vercel" },
+    { name: "SQLite", icon: "sqlite" },
   ],
 };

@@ -20,6 +20,9 @@
   --danger: #b42318;
   --danger-bg: #fdecec;
   --on-ac: #ffffff;
+  --topo-minor: rgba(27, 23, 38, 0.08);
+  --topo-major: rgba(27, 23, 38, 0.20);
+  --topo-accent: rgba(109, 40, 217, 0.70);
   color-scheme: light;
 }
 
@@ -35,6 +38,9 @@
     --danger: #f28b82;
     --danger-bg: #2c1615;
     --on-ac: #0f0d16;
+    --topo-minor: rgba(255, 255, 255, 0.09);
+    --topo-major: rgba(255, 255, 255, 0.22);
+    --topo-accent: rgba(182, 156, 255, 0.75);
     color-scheme: dark;
   }
 }
@@ -50,7 +56,27 @@
   --danger: #f28b82;
   --danger-bg: #2c1615;
   --on-ac: #0f0d16;
+  --topo-minor: rgba(255, 255, 255, 0.09);
+  --topo-major: rgba(255, 255, 255, 0.22);
+  --topo-accent: rgba(182, 156, 255, 0.75);
   color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: #ffffff;
+  --tx: #1b1726;
+  --mu: #645e73;
+  --ln: #e4e0ed;
+  --ac: #6d28d9;
+  --ac2: #1d4ed8;
+  --sf: #f6f4fb;
+  --danger: #b42318;
+  --danger-bg: #fdecec;
+  --on-ac: #ffffff;
+  --topo-minor: rgba(27, 23, 38, 0.08);
+  --topo-major: rgba(27, 23, 38, 0.20);
+  --topo-accent: rgba(109, 40, 217, 0.70);
+  color-scheme: light;
 }
 
 @theme inline {
@@ -67,8 +93,12 @@
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", "DejaVu Sans Mono", monospace;
 }
 
-body {
+html {
   background: var(--bg);
+}
+
+body {
+  background: transparent;
   color: var(--tx);
   font-family: var(--font-mono);
   font-weight: 400;
@@ -165,4 +195,42 @@ body {
   border-left: 2px solid var(--ln);
   padding-left: 1rem;
   color: var(--mu);
+}
+
+/* Topographic background, drift and still pictures */
+.topo-pic {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.topo-pic-lines {
+  background-image: url("/topo/dark-lines.webp");
+}
+.topo-pic-accent {
+  background-image: url("/topo/dark-accent.webp");
+}
+:root[data-theme="light"] .topo-pic-lines {
+  background-image: url("/topo/paper-lines.webp");
+}
+:root[data-theme="light"] .topo-pic-accent {
+  background-image: url("/topo/paper-accent.webp");
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .topo-pic-lines {
+    background-image: url("/topo/paper-lines.webp");
+  }
+  :root:not([data-theme="dark"]) .topo-pic-accent {
+    background-image: url("/topo/paper-accent.webp");
+  }
+}
+:root[data-theme="dark"] .topo-pic-lines {
+  background-image: url("/topo/dark-lines.webp");
+}
+:root[data-theme="dark"] .topo-pic-accent {
+  background-image: url("/topo/dark-accent.webp");
+}
+
+.topo-drift {
+  transform-origin: 50% 50%;
+  will-change: transform;
 }
