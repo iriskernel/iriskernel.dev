@@ -17,7 +17,7 @@ type Mode = "auto" | "live" | "drift" | "still";
 type Resolved = "live" | "drift" | "still";
 
 const SPEED = 0.5; // field time per second ("Slow")
-const FPS = 20; // the lines move well under a pixel per frame, so 20 looks smooth and costs less than 30
+const FPS = 60; // Smooth 60fps locked to display VSync for fluid motion
 
 const noSubscribe = () => () => {};
 function subscribe(onChange: () => void) {
@@ -130,6 +130,8 @@ const FRAG_BODY = `
 uniform vec2 uRes;      // canvas size in CSS pixels
 uniform float uScale;   // device pixels per CSS pixel
 uniform float uTime;    // field time
+uniform vec2 uPeakA;    // precomputed peak A coordinates
+uniform vec2 uPeakB;    // precomputed peak B coordinates
 uniform vec4 uMinor;    // rgb + alpha of each line class (from the theme)
 uniform vec4 uMajor;
 uniform vec4 uAccent;
@@ -138,17 +140,17 @@ const float FW1 = 0.010;
 // Overall line strength (1.0 = the theme's alphas exactly)
 const float GAIN = 0.85;
 
-// The terrain: the same function as the approved engine (lib/topo/engine.ts)
-float field(vec2 p, vec2 size, float t) {
+// The terrain: same smooth continuous field, with peaks precomputed on CPU
+float field(vec2 p, float t) {
   float wx = p.x + 14.0 * sin(.031 * p.y + .6 + .18 * t);
   float wy = p.y + 14.0 * sin(.027 * p.x + 1.1 - .15 * t);
   float v = .9 * sin(.021 * wx + .8 * sin(.013 * wy + 1.0 + .35 * t) + .5 + .12 * t)
           + .7 * sin(.017 * wy - .012 * wx + 1.7 - .1 * t)
           + .45 * sin(.033 * wx + .027 * wy + .3 + .2 * t);
-  vec2 a = vec2(.8 * size.x + 30.0 * sin(.08 * t), .27 * size.y + 20.0 * cos(.07 * t));
-  v += 1.5 * exp(-dot(p - a, p - a) / 12800.0);
-  vec2 b = vec2(.17 * size.x + 25.0 * cos(.06 * t), .64 * size.y + 18.0 * sin(.09 * t));
-  v += 1.2 * exp(-dot(p - b, p - b) / 9800.0);
+  vec2 da = p - uPeakA;
+  v += 1.5 * exp(-dot(da, da) * 0.000078125);
+  vec2 db = p - uPeakB;
+  v += 1.2 * exp(-dot(db, db) * 0.000102040816);
   return v;
 }
 
@@ -161,7 +163,7 @@ float vignette(vec2 p) {
 
 vec4 shade() {
   vec2 p = vec2(gl_FragCoord.x, uRes.y * uScale - gl_FragCoord.y) / uScale; // CSS pixels, y down
-  float s = (field(p, uRes, uTime) + 2.0) / 0.26;
+  float s = (field(p, uTime) + 2.0) / 0.26;
   float idx = floor(s + 0.5);
   if (idx < 0.0 || idx > 18.0) return vec4(0.0); // the approved engine draws levels -2.0 .. 2.68 only
   float fw = fwidth(s);
@@ -265,7 +267,7 @@ function ShaderContours({ perf, onFail }: { perf: boolean; onFail: () => void })
     g.enableVertexAttribArray(aPos);
     g.vertexAttribPointer(aPos, 2, g.FLOAT, false, 0, 0);
     const u = (n: string) => g.getUniformLocation(prog, n);
-    const uRes = u("uRes"), uScale = u("uScale"), uTime = u("uTime"), uMinor = u("uMinor"), uMajor = u("uMajor"), uAccent = u("uAccent");
+    const uRes = u("uRes"), uScale = u("uScale"), uTime = u("uTime"), uMinor = u("uMinor"), uMajor = u("uMajor"), uAccent = u("uAccent"), uPeakA = u("uPeakA"), uPeakB = u("uPeakB");
 
     // Theme colors, read from the CSS variables now and whenever the theme changes
     const style = getComputedStyle(canvas);
@@ -280,28 +282,30 @@ function ShaderContours({ perf, onFail }: { perf: boolean; onFail: () => void })
     const FRAME_MS = 1000 / (perf ? Number(param("topofps")) || FPS : FPS);
     let fieldTime = perf ? Number(param("topot0")) || 0 : 0;
     let cw = 0, ch = 0;
-    let base = Math.min(window.devicePixelRatio || 1, 1.25);
-    let factor = 1; // adaptive: 1.0 down to 0.5
+    const base = Math.min(window.devicePixelRatio || 1, 1.0); // 1.0x scale keeps lines razor sharp while saving millions of calculations on HiDPI displays
     let raf = 0, lastTick = 0, lastDraw = 0;
-    let slowFrames = 0, steadySince = 0;
     let workSum = 0, workN = 0, frames = 0, fpsStart = performance.now(), maxWork = 0;
-    const counters = { frames: 0, running: false, mode: "live", webgl: version, scale: 0, avgMs: 0, maxMs: 0 };
+    const counters = { frames: 0, running: false, mode: "live", webgl: version, scale: base, avgMs: 0, maxMs: 0 };
     if (perf) (window as unknown as { __topo: typeof counters }).__topo = counters;
 
     const draw = () => {
+      const aX = 0.8 * cw + 30.0 * Math.sin(0.08 * fieldTime);
+      const aY = 0.27 * ch + 20.0 * Math.cos(0.07 * fieldTime);
+      const bX = 0.17 * cw + 25.0 * Math.cos(0.06 * fieldTime);
+      const bY = 0.64 * ch + 18.0 * Math.sin(0.09 * fieldTime);
+      g.uniform2f(uPeakA, aX, aY);
+      g.uniform2f(uPeakB, bX, bY);
       g.uniform1f(uTime, fieldTime);
       g.drawArrays(g.TRIANGLES, 0, 3);
     };
     const size = () => {
       cw = window.innerWidth;
       ch = canvas.clientHeight || window.innerHeight;
-      const scale = base * factor;
-      canvas.width = Math.max(1, Math.round(cw * scale));
-      canvas.height = Math.max(1, Math.round(ch * scale));
+      canvas.width = Math.max(1, Math.round(cw * base));
+      canvas.height = Math.max(1, Math.round(ch * base));
       g.viewport(0, 0, canvas.width, canvas.height);
       g.uniform2f(uRes, cw, ch);
       g.uniform1f(uScale, canvas.width / cw);
-      counters.scale = Math.round(scale * 100) / 100;
     };
     const scheme = window.matchMedia("(prefers-color-scheme: dark)");
     const onScheme = () => {
@@ -314,8 +318,7 @@ function ShaderContours({ perf, onFail }: { perf: boolean; onFail: () => void })
 
     const loop = (now: number) => {
       raf = requestAnimationFrame(loop);
-      if (lastDraw && now - lastDraw < FRAME_MS - 2) return; // about 20 frames a second
-      const interval = lastDraw ? now - lastDraw : FRAME_MS;
+      if (lastDraw && now - lastDraw < FRAME_MS - 2) return;
       lastDraw = now;
       fieldTime += (Math.min(now - (lastTick || now), 100) / 1000) * speed; // continuous, never jumps
       lastTick = now;
@@ -327,25 +330,7 @@ function ShaderContours({ perf, onFail }: { perf: boolean; onFail: () => void })
       frames++;
       counters.frames++;
       if (work > maxWork) maxWork = work;
-      // Adaptive render scale: frames keep arriving late -> draw fewer pixels; steady for a while -> back up
-      if (interval > FRAME_MS * 1.35) {
-        slowFrames++;
-        steadySince = 0;
-        if (slowFrames >= 60 && factor > 0.5) {
-          factor = Math.max(0.5, Math.round((factor - 0.1) * 10) / 10);
-          slowFrames = 0;
-          size();
-        }
-      } else {
-        slowFrames = Math.max(0, slowFrames - 1);
-        if (!steadySince) steadySince = now;
-        if (factor < 1 && now - steadySince > 4000) {
-          factor = Math.min(1, Math.round((factor + 0.1) * 10) / 10);
-          steadySince = now;
-          size();
-        }
-      }
-      if (workN === 30) {
+      if (workN === 60) {
         counters.avgMs = Math.round((workSum / workN) * 100) / 100;
         counters.maxMs = Math.round(maxWork * 100) / 100;
         if (perf) {
@@ -373,7 +358,6 @@ function ShaderContours({ perf, onFail }: { perf: boolean; onFail: () => void })
     };
     const onVisibility = () => (document.visibilityState === "visible" ? start() : stop());
     const onResize = () => {
-      base = Math.min(window.devicePixelRatio || 1, 1.25);
       size();
       draw();
     };
