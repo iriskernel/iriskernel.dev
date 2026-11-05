@@ -3,6 +3,7 @@ import { Footer } from "@/components/Footer";
 import { themeScript } from "@/components/ThemeToggle";
 import { TopBar } from "@/components/TopBar";
 import TopoBackground from "@/components/TopoBackground";
+import { TerminalShortcut } from "@/components/TerminalShortcut";
 import { site } from "@/content/site";
 import "./globals.css";
 
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body className="flex min-h-dvh flex-col antialiased">
         <TopoBackground />
+        <TerminalShortcut />
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-10 focus:rounded-md focus:bg-bg focus:px-3 focus:py-2">
           Skip to content
         </a>
