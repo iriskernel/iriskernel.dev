@@ -5,6 +5,8 @@ import { site } from "@/content/site";
 
 type Block = { id: number; command?: string; output: React.ReactNode };
 
+type DestructType = "rm" | "forkbomb" | "dd" | "shutdown";
+
 const shortcutCommands = [
   "help",
   "neofetch",
@@ -12,7 +14,7 @@ const shortcutCommands = [
   "garage",
   "dmesg",
   "about",
-  "contact",
+  "rm -rf /",
   "clear",
 ] as const;
 
@@ -33,6 +35,11 @@ const allCommands = [
   "ls",
   "sudo",
   "cat",
+  "rm",
+  "shutdown",
+  "poweroff",
+  "reboot",
+  "forkbomb",
 ] as const;
 
 const link = (href: string, text: string) => (
@@ -40,6 +47,118 @@ const link = (href: string, text: string) => (
     {text}
   </a>
 );
+
+function isSelfDestructCommand(raw: string): { isDestruct: boolean; type: DestructType } | null {
+  const norm = raw.trim().toLowerCase().replace(/\s+/g, " ");
+
+  // 1. Fork bomb patterns
+  if (
+    norm.includes(":(){:|:&};:") ||
+    norm.includes(":(){ :|:& };:") ||
+    norm.includes(":() { :|:& }; :") ||
+    norm === "forkbomb" ||
+    norm === "fork bomb"
+  ) {
+    return { isDestruct: true, type: "forkbomb" };
+  }
+
+  // 2. rm -rf patterns
+  if (
+    norm.includes("rm -rf") ||
+    norm.includes("rm -fr") ||
+    norm.includes("rm -r -f") ||
+    norm.includes("rm -f -r") ||
+    norm.includes("no-preserve-root")
+  ) {
+    return { isDestruct: true, type: "rm" };
+  }
+
+  // 3. Disk zeroing & filesystem wipe
+  if (
+    norm.startsWith("dd if=") ||
+    norm.includes("of=/dev/sda") ||
+    norm.includes("of=/dev/nvme") ||
+    norm.startsWith("mkfs")
+  ) {
+    return { isDestruct: true, type: "dd" };
+  }
+
+  // 4. Shutdown / halt / killall
+  if (
+    norm.startsWith("shutdown") ||
+    norm.startsWith("poweroff") ||
+    norm.startsWith("halt") ||
+    norm === "init 0" ||
+    norm.includes("kill -9 -1") ||
+    norm.includes("killall -9") ||
+    norm.includes("sysrq-trigger")
+  ) {
+    return { isDestruct: true, type: "shutdown" };
+  }
+
+  // 5. Explicit aliases
+  if (/^(self-destruct|destruct|destroy|explode|boom|wipe|crash)$/.test(norm)) {
+    return { isDestruct: true, type: "rm" };
+  }
+
+  return null;
+}
+
+function renderDestructionLog(type: DestructType): React.ReactNode {
+  switch (type) {
+    case "forkbomb":
+      return (
+        <div className="flex flex-col gap-1 font-mono text-xs text-danger">
+          <p className="font-bold">-bash: fork: retry: Resource temporarily unavailable</p>
+          <p>-bash: fork: retry: Resource temporarily unavailable</p>
+          <p>[ALERT] Out of memory: Kill process 1 (init) score 1000</p>
+          <p>[ALERT] Thread pool exhausted: 32768 processes active</p>
+          <p className="mt-1 w-fit bg-danger px-1 font-bold text-white">[STACK OVERFLOW] CPU core thermal runaway imminent!</p>
+          <p className="animate-pulse text-[11px] text-danger">Fatal error: thread exhaustion. Web environment deconstructing...</p>
+        </div>
+      );
+
+    case "dd":
+      return (
+        <div className="flex flex-col gap-1 font-mono text-xs text-danger">
+          <p className="font-bold">dd: overwriting /dev/sda with zero-stream...</p>
+          <p>512+0 records in</p>
+          <p>512+0 records out</p>
+          <p>[CORRUPT] Master Boot Record (MBR) and partition table wiped!</p>
+          <p>[CORRUPT] Filesystem superblocks destroyed!</p>
+          <p className="mt-1 w-fit bg-danger px-1 font-bold text-white">[IO PANIC] Unrecoverable disk error on primary drive</p>
+          <p className="animate-pulse text-[11px] text-danger">Fatal error: storage zeroed out. Web environment collapsing...</p>
+        </div>
+      );
+
+    case "shutdown":
+      return (
+        <div className="flex flex-col gap-1 font-mono text-xs text-mu">
+          <p className="font-bold text-tx">Broadcast message from root@dev: system is shutting down NOW!</p>
+          <p>[  OK  ] Stopped target Graphical Interface.</p>
+          <p>[  OK  ] Unmounting /home, /boot, /root...</p>
+          <p>[  OK  ] Deactivating virtual memory paging...</p>
+          <p>[  OK  ] Powering down system bus devices...</p>
+          <p className="font-bold text-danger">[HALT] System halted. Power down imminent.</p>
+        </div>
+      );
+
+    case "rm":
+    default:
+      return (
+        <div className="flex flex-col gap-1 font-mono text-xs text-danger">
+          <p className="font-bold">[CRITICAL] Bypassing safety check: unlinking root filesystem...</p>
+          <p>rm: removing &apos;/boot/vmlinuz-6.12.0-custom-ik&apos;</p>
+          <p>rm: removing &apos;/bin/bash&apos;</p>
+          <p>rm: removing &apos;/etc/shadow&apos;</p>
+          <p>rm: removing &apos;/lib64/libc.so.6&apos;</p>
+          <p>rm: removing &apos;/sys/class/graphics&apos;</p>
+          <p className="mt-1 w-fit bg-danger px-1 font-bold text-white">[KERNEL PANIC] VFS: Unable to mount root fs on unknown-block(0,0)</p>
+          <p className="animate-pulse text-[11px] text-danger">Fatal error: structural failure detected. Website integrity collapsing...</p>
+        </div>
+      );
+  }
+}
 
 function run(input: string): React.ReactNode {
   const parts = input.trim().split(/\s+/);
@@ -70,6 +189,8 @@ function run(input: string): React.ReactNode {
           <dd className="text-mu">links and where to find me</dd>
           <dt className="text-ac">ls</dt>
           <dd className="text-mu">list virtual directory files</dd>
+          <dt className="text-danger font-medium">rm -rf /</dt>
+          <dd className="text-danger/80">⚠️ self-destruct (collapse entire website)</dd>
           <dt className="text-ac">clear</dt>
           <dd className="text-mu">clear the terminal output</dd>
         </dl>
@@ -276,6 +397,10 @@ export function Terminal() {
   const [value, setValue] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
+  const [panicOverlay, setPanicOverlay] = useState<DestructType | null>(null);
+  const [rebooting, setRebooting] = useState(false);
+  const [rebootCountdown, setRebootCountdown] = useState(5);
+
   const nextId = useRef(1);
   const inputRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -284,6 +409,60 @@ export function Terminal() {
     endRef.current?.scrollIntoView({ block: "nearest" });
   }, [blocks]);
 
+  // Handle countdown for panic recovery
+  useEffect(() => {
+    if (!panicOverlay || rebooting) return;
+    if (rebootCountdown <= 0) {
+      rebootSystem();
+      return;
+    }
+    const timer = setTimeout(() => {
+      setRebootCountdown((c) => c - 1);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [panicOverlay, rebootCountdown, rebooting]);
+
+  // Clean up any global destruction classes when unmounting
+  useEffect(() => {
+    return () => {
+      document.body.classList.remove("system-destructing", "system-falling");
+    };
+  }, []);
+
+  function triggerDestruction(type: DestructType) {
+    document.body.classList.add("system-destructing");
+
+    setTimeout(() => {
+      document.body.classList.add("system-falling");
+    }, 600);
+
+    setTimeout(() => {
+      setRebootCountdown(5);
+      setPanicOverlay(type);
+    }, 2400);
+  }
+
+  function rebootSystem() {
+    setRebooting(true);
+    setTimeout(() => {
+      document.body.classList.remove("system-destructing", "system-falling");
+      setPanicOverlay(null);
+      setRebooting(false);
+      setBlocks((prev) => [
+        ...prev,
+        {
+          id: nextId.current++,
+          output: (
+            <div className="my-1 rounded-md border border-emerald-500/40 bg-emerald-950/20 p-2.5 font-mono text-xs text-emerald-400">
+              <p className="font-bold">✔ SYSTEM REBOOT COMPLETED</p>
+              <p className="text-mu">BIOS POST check passed. Root filesystem restored from clean snapshot #1.</p>
+            </div>
+          ),
+        },
+      ]);
+    }, 1800);
+  }
+
   function submit(raw: string) {
     const trimmed = raw.trim();
     setValue("");
@@ -291,6 +470,14 @@ export function Terminal() {
     if (!trimmed) return;
 
     setHistory((prev) => (prev[prev.length - 1] === trimmed ? prev : [...prev, trimmed]));
+
+    // Check for self-destruct command
+    const destruct = isSelfDestructCommand(trimmed);
+    if (destruct) {
+      setBlocks((b) => [...b, { id: nextId.current++, command: trimmed, output: renderDestructionLog(destruct.type) }]);
+      triggerDestruction(destruct.type);
+      return;
+    }
 
     if (trimmed.toLowerCase() === "clear") {
       setBlocks([]);
@@ -327,68 +514,133 @@ export function Terminal() {
   };
 
   return (
-    <div className="rounded-xl border border-ln bg-bg shadow-sm">
-      <div className="flex items-center justify-between border-b border-ln px-4 py-2 text-xs text-mu">
-        <div className="flex items-center gap-2">
-          <span aria-hidden="true" className="flex gap-1.5">
-            <span className="size-2.5 rounded-full bg-danger/80" />
-            <span className="size-2.5 rounded-full bg-amber-500/80" />
-            <span className="size-2.5 rounded-full bg-emerald-500/80" />
-          </span>
-          <span className="font-mono">{site.handle}@dev: ~</span>
+    <>
+      <div className="rounded-xl border border-ln bg-bg shadow-sm">
+        <div className="flex items-center justify-between border-b border-ln px-4 py-2 text-xs text-mu">
+          <div className="flex items-center gap-2">
+            <span aria-hidden="true" className="flex gap-1.5">
+              <span className="size-2.5 rounded-full bg-danger/80" />
+              <span className="size-2.5 rounded-full bg-amber-500/80" />
+              <span className="size-2.5 rounded-full bg-emerald-500/80" />
+            </span>
+            <span className="font-mono">{site.handle}@dev: ~</span>
+          </div>
+          <span className="hidden font-mono text-[10px] text-mu/70 sm:inline">zsh / xterm-256color</span>
         </div>
-        <span className="font-mono text-[10px] text-mu/70 hidden sm:inline">zsh / xterm-256color</span>
-      </div>
-      <div className="h-[60dvh] min-h-72 overflow-y-auto p-4 text-sm leading-6" onClick={() => inputRef.current?.focus()}>
-        <div aria-live="polite" className="flex flex-col gap-3 font-mono">
-          {blocks.map((b) => (
-            <div key={b.id}>
-              {b.command !== undefined && (
-                <p>
-                  <span aria-hidden="true" className="text-ac2">$ </span>
-                  <span className="sr-only">You typed: </span>
-                  {b.command}
-                </p>
-              )}
-              {b.output}
-            </div>
+        <div className="h-[60dvh] min-h-72 overflow-y-auto p-4 text-sm leading-6" onClick={() => inputRef.current?.focus()}>
+          <div aria-live="polite" className="flex flex-col gap-3 font-mono">
+            {blocks.map((b) => (
+              <div key={b.id}>
+                {b.command !== undefined && (
+                  <p>
+                    <span aria-hidden="true" className="text-ac2">$ </span>
+                    <span className="sr-only">You typed: </span>
+                    {b.command}
+                  </p>
+                )}
+                {b.output}
+              </div>
+            ))}
+          </div>
+          <form
+            className="mt-3 flex items-center gap-2 font-mono"
+            onSubmit={(e) => {
+              e.preventDefault();
+              submit(value);
+            }}
+          >
+            <label htmlFor="terminal-input" className="text-ac2">
+              <span aria-hidden="true">$</span>
+              <span className="sr-only">Command</span>
+            </label>
+            <input
+              ref={inputRef}
+              id="terminal-input"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              enterKeyHint="send"
+              className="min-w-0 flex-1 bg-transparent caret-ac outline-none"
+            />
+          </form>
+          <div ref={endRef} />
+        </div>
+        <div className="flex flex-wrap items-center gap-2 border-t border-ln px-4 py-3">
+          <span className="sr-only">Shortcuts:</span>
+          <span className="mr-1 font-mono text-xs text-mu">Quick run:</span>
+          {shortcutCommands.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => submit(c)}
+              className={`rounded-md border px-2.5 py-1 font-mono text-xs transition-colors ${
+                c === "rm -rf /"
+                  ? "border-danger/60 bg-danger/10 text-danger hover:border-danger hover:bg-danger/20 font-bold"
+                  : "border-ln bg-sf hover:border-ac hover:text-ac2"
+              }`}
+            >
+              {c}
+            </button>
           ))}
         </div>
-        <form
-          className="mt-3 flex items-center gap-2 font-mono"
-          onSubmit={(e) => {
-            e.preventDefault();
-            submit(value);
-          }}
-        >
-          <label htmlFor="terminal-input" className="text-ac2">
-            <span aria-hidden="true">$</span>
-            <span className="sr-only">Command</span>
-          </label>
-          <input
-            ref={inputRef}
-            id="terminal-input"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            autoComplete="off"
-            autoCapitalize="none"
-            spellCheck={false}
-            enterKeyHint="send"
-            className="min-w-0 flex-1 bg-transparent caret-ac outline-none"
-          />
-        </form>
-        <div ref={endRef} />
       </div>
-      <div className="flex flex-wrap items-center gap-2 border-t border-ln px-4 py-3">
-        <span className="sr-only">Shortcuts:</span>
-        <span className="text-xs text-mu font-mono mr-1">Quick run:</span>
-        {shortcutCommands.map((c) => (
-          <button key={c} type="button" onClick={() => submit(c)} className="rounded-md border border-ln bg-sf px-2.5 py-1 text-xs font-mono hover:text-ac2 hover:border-ac transition-colors">
-            {c}
-          </button>
-        ))}
-      </div>
-    </div>
+
+      {/* Full-Screen Kernel Panic Overlay when the site falls apart */}
+      {panicOverlay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4 backdrop-blur-xl">
+          <div className="relative w-full max-w-2xl rounded-xl border-2 border-danger bg-black p-6 font-mono text-xs sm:text-sm text-danger shadow-2xl">
+            <div className="mb-4 flex items-center justify-between border-b border-danger/40 pb-3">
+              <span className="font-bold tracking-widest text-white">*** KERNEL PANIC: SYSTEM COLLAPSE ***</span>
+              <span className="animate-ping size-2 rounded-full bg-danger" />
+            </div>
+
+            {rebooting ? (
+              <div className="space-y-2 text-emerald-400">
+                <p className="font-bold text-white">&gt;&gt; INITIATING EMERGENCY HARDWARE POST &amp; BIOS RESET...</p>
+                <p>&gt;&gt; Restoring virtual filesystem from immutable snapshot... [100%]</p>
+                <p>&gt;&gt; Mounting /dev/nvme0n1 (ext4 clean)... OK</p>
+                <p>&gt;&gt; Spawning display manager &amp; desktop session... OK</p>
+                <p className="animate-pulse text-white">&gt;&gt; Returning to userspace...</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="font-bold text-white bg-danger/90 px-2 py-0.5 w-fit">
+                  CRITICAL: ROOT DESTRUCTION SIGNAL DETECTED [{panicOverlay.toUpperCase()}]
+                </p>
+                <p className="text-mu">
+                  PID: 1 (init) | CPU: 0 | Tainted: G D W O | Kernel: 6.12.0-custom-ik
+                </p>
+
+                <div className="rounded border border-danger/30 bg-black/60 p-3 text-[11px] leading-5 text-danger/90 font-mono">
+                  <p>Call Trace:</p>
+                  <p>&nbsp;&nbsp;[&lt;ffffffff81001234&gt;] do_user_self_destruct+0x8a/0x120</p>
+                  <p>&nbsp;&nbsp;[&lt;ffffffff81005678&gt;] sys_rmdir_everything+0x44/0x90</p>
+                  <p>&nbsp;&nbsp;[&lt;ffffffff81009abc&gt;] system_collapsed_successfully+0x10/0x20</p>
+                  <p>&nbsp;&nbsp;[&lt;ffffffff8100dead&gt;] panic_website_structure_unrecoverable</p>
+                </div>
+
+                <p className="text-white">
+                  The webpage has physically collapsed into the abyss. Automatic reboot in{" "}
+                  <span className="font-bold text-danger text-base underline">{rebootCountdown}s</span>.
+                </p>
+
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={rebootSystem}
+                    className="w-full rounded-lg border border-emerald-500 bg-emerald-600/20 py-2.5 font-bold text-emerald-400 transition-all hover:bg-emerald-500 hover:text-black cursor-pointer shadow-lg"
+                  >
+                    ⚡ EMERGENCY BIOS REBOOT / RESTORE NOW
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

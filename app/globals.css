@@ -234,3 +234,61 @@ body {
   transform-origin: 50% 50%;
   will-change: transform;
 }
+
+/* --- Self-Destruct Collapse Physics & Glitch --- */
+@keyframes screen-quake {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  10% { transform: translate(-6px, -4px) rotate(-1.5deg); }
+  20% { transform: translate(6px, 5px) rotate(1.2deg); }
+  30% { transform: translate(-8px, 6px) rotate(-1.8deg); }
+  40% { transform: translate(7px, -5px) rotate(1.4deg); }
+  50% { transform: translate(-5px, 4px) rotate(-0.8deg); filter: hue-rotate(90deg) contrast(140%); }
+  60% { transform: translate(6px, -4px) rotate(1deg); }
+  70% { transform: translate(-7px, 3px) rotate(-1.2deg); }
+  80% { transform: translate(5px, 6px) rotate(1deg); }
+  90% { transform: translate(-3px, -4px) rotate(-0.5deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes fall-and-tumble-left {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  30% { transform: translate(-30px, 80px) rotate(-12deg); opacity: 0.9; }
+  60% { transform: translate(-90px, 400px) rotate(-35deg); opacity: 0.7; }
+  100% { transform: translate(-180px, 1300px) rotate(-65deg); opacity: 0; pointer-events: none; }
+}
+
+@keyframes fall-and-tumble-right {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  30% { transform: translate(40px, 70px) rotate(10deg); opacity: 0.9; }
+  60% { transform: translate(110px, 380px) rotate(28deg); opacity: 0.7; }
+  100% { transform: translate(220px, 1300px) rotate(55deg); opacity: 0; pointer-events: none; }
+}
+
+@keyframes fall-and-tumble-center {
+  0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
+  25% { transform: translate(15px, 60px) scale(0.98) rotate(4deg); opacity: 0.95; }
+  50% { transform: translate(-30px, 320px) scale(0.9) rotate(-8deg); opacity: 0.8; }
+  75% { transform: translate(40px, 750px) scale(0.8) rotate(15deg); opacity: 0.5; }
+  100% { transform: translate(0, 1400px) scale(0.65) rotate(-25deg); opacity: 0; pointer-events: none; }
+}
+
+.system-destructing {
+  animation: screen-quake 0.5s infinite ease-in-out;
+}
+
+.system-falling header {
+  animation: fall-and-tumble-left 2.2s cubic-bezier(0.5, 0, 0.75, 0) forwards !important;
+}
+
+.system-falling main {
+  animation: fall-and-tumble-center 2.5s cubic-bezier(0.5, 0, 0.75, 0) forwards !important;
+}
+
+.system-falling footer {
+  animation: fall-and-tumble-right 2.4s cubic-bezier(0.5, 0, 0.75, 0) forwards !important;
+}
+
+.system-falling canvas {
+  filter: invert(1) hue-rotate(180deg) saturate(3) blur(2px) !important;
+  transition: filter 1s ease-out;
+}
